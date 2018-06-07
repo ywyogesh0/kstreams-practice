@@ -42,9 +42,7 @@ public class WordCountApp {
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
         streams.start();
 
-        for (StreamsMetadata metadata : streams.allMetadataForStore("Word_Count")) {
-            System.out.println(metadata.toString());
-        }
+        streams.toString();
 
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
     }
