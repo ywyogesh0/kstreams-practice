@@ -1,4 +1,4 @@
-package com.ywyogesh0.kstreams;
+package com.ywyogesh0.kstreams.favouritecolor;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -32,7 +32,7 @@ public class FColorApp {
 
         Properties properties = new Properties();
 
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "fc-5");
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "fav-color");
         properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -42,24 +42,24 @@ public class FColorApp {
 
         StreamsBuilder streamsBuilder = new StreamsBuilder();
 
-        streamsBuilder.<String, String>stream("fc-i-5")
+        streamsBuilder.<String, String>stream("fav-color-input")
                 .filter((nullKey, value) -> value.contains(",") && value.split(",").length == 2)
 
                 .map((nullKey, value) ->
                         new KeyValue<>(value.split(",")[0].toLowerCase(), value.split(",")[1].toLowerCase()))
 
                 .filter((userId, color) -> fColors.isFavColor(color))
-                .to("fc-t-5");
+                .to("fav-color-intermediate");
 
-        streamsBuilder.<String, String>table("fc-t-5")
+        streamsBuilder.<String, String>table("fav-color-intermediate")
                 .groupBy((userId, color) -> new KeyValue<>(color, color))
 
-                .count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("Count")
+                .count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("Fav_Color_Count")
                         .withKeySerde(Serdes.String())
                         .withValueSerde(Serdes.Long()))
 
                 .toStream()
-                .to("fc-o-5", Produced.with(Serdes.String(), Serdes.Long()));
+                .to("fav-color-output", Produced.with(Serdes.String(), Serdes.Long()));
 
         KafkaStreams streams = new KafkaStreams(streamsBuilder.build(), properties);
         streams.cleanUp();

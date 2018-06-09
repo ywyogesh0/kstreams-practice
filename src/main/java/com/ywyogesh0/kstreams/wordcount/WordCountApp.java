@@ -1,4 +1,4 @@
-package com.ywyogesh0.kstreams;
+package com.ywyogesh0.kstreams.wordcount;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -21,7 +21,7 @@ public class WordCountApp {
 
         Properties properties = new Properties();
 
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "word-count-1");
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "word-count");
         properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         properties.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -30,14 +30,14 @@ public class WordCountApp {
 
         StreamsBuilder builder = new StreamsBuilder();
 
-        KTable<String, Long> kTable = builder.stream("wc-input-1", Consumed.with(Serdes.String(), Serdes.String()))
+        KTable<String, Long> kTable = builder.stream("word-count-input", Consumed.with(Serdes.String(), Serdes.String()))
                 .mapValues(text -> text.toLowerCase())
                 .flatMapValues(lowerCaseText -> Arrays.asList(lowerCaseText.split(" ")))
                 .selectKey((ignoredKey, word) -> word)
                 .groupByKey()
                 .count(Materialized.as("Word_Count"));
 
-        kTable.toStream().to("wc-output-1", Produced.with(Serdes.String(), Serdes.Long()));
+        kTable.toStream().to("word-count-output", Produced.with(Serdes.String(), Serdes.Long()));
 
         KafkaStreams streams = new KafkaStreams(builder.build(), properties);
         streams.start();
